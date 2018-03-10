@@ -132,7 +132,6 @@ var game = (function ()
 			if(ball.isGoal)
 			{
 				ball.goal();
-				console.log('gol');
 				return;
 			}
 
@@ -202,7 +201,6 @@ var game = (function ()
         return ball;
 	}
 
-	console.dir(posiciones);
 	function checkCollision(ball)
 	{
 		return posiciones.some(function(posicion){
