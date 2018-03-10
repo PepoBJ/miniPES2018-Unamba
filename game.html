@@ -6,13 +6,27 @@
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>PES - UNAMBA</title>
 	<style>
+		* {
+			transition: all ease-in .5s;
+		}
 		#canvas {
 			display: block;
 			margin: 0 auto;
 		}
+
+		#gol {
+			color: transparent;
+			font-weight: bold;
+			text-align: center;
+			font-size: 2em;
+			padding: 1em;
+		}
 	</style>
 </head>
 <body onload="game.init()">
+	<div id="gol">
+		GOOOOL !!!!
+	</div>
 	<div class="juego">
 		<canvas id="canvas" width="900" height="450">TU NAVEGADOR NO SOPORTA HTML5!</canvas>
 	</div>

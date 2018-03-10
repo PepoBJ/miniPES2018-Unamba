@@ -78,18 +78,16 @@ var game = (function ()
 
 			posiciones.push([
 				new Point(playerA.posX, playerA.posY),
-				new Point(playerA.posX + 66, playerA.posY),
-				new Point(playerA.posX, playerA.posY + 66)
+				new Point(playerA.posX + 50, playerA.posY),
+				new Point(playerA.posX, playerA.posY + 50)
 			]);
 
 			posiciones.push([
 				new Point(playerB.posX, playerB.posY),
-				new Point(playerB.posX + 66, playerB.posY),
-				new Point(playerB.posX, playerB.posY + 66)
+				new Point(playerB.posX + 40, playerB.posY),
+				new Point(playerB.posX, playerB.posY + 40)
 			]);
 		}
-
-        showLifeAndScore();
 
         addListener(document, 'keydown', keyDown);
 		addListener(document, 'keyup', keyUp);
@@ -101,9 +99,9 @@ var game = (function ()
         anim();
 	}
 	
-	function showLifeAndScore () 
+	function showScore () 
 	{
-        bufferctx.fillStyle="rgb(59,59,59)";
+        bufferctx.fillStyle="#7607ef";
         bufferctx.font="bold 16px Arial";
         bufferctx.fillText("Equipo A: " + equipoA, canvas.width - 100, 20);
         bufferctx.fillText("Equipo B: " + equipoB, canvas.width - 100,40);
@@ -126,11 +124,18 @@ var game = (function ()
         ball.src = 'img/ball.png';
         ball.posX = (canvas.width / 2) - (settings.defaultWidth / 2);
         ball.posY = (canvas.height / 2) - (settings.defaultHeight / 2);
-        ball.idGoal = false;
+        ball.isGoal = false;
         ball.speed = 5;
 
 		ball.doAnything = function() 
 		{
+			if(ball.isGoal)
+			{
+				ball.goal();
+				console.log('gol');
+				return;
+			}
+
 			if ((keyPressed.left && checkCollision(
 				[
 					new Point(ball.posX - ball.speed, ball.posY),
@@ -166,11 +171,28 @@ var game = (function ()
 				ball.posY -= ball.speed;
 			if (keyPressed.down && ball.posY < (canvas.height - ball.height - 5))
 				ball.posY += ball.speed;
+
+			if(ball.posY >= (canvas.height / 2 - 50) && ball.posY <= (canvas.height / 2 + 50))
+			{
+				
+				if(ball.posX <= 5)
+				{
+					ball.isGoal = true;
+					gol = true;
+					equipoA ++;
+				}
+				else if(ball.posX >= canvas.width - (5 + settings.defaultWidth))
+				{
+					ball.isGoal = true;
+					gol = true;
+					equipoB ++;
+				}
+			}
         };
 
 		ball.goal = function() 
 		{
-			this.goal = true;
+			this.idGoal = true;
 			
 			setTimeout(function () {
 				ball = new Ball();
@@ -183,15 +205,10 @@ var game = (function ()
 	console.dir(posiciones);
 	function checkCollision(ball)
 	{
-		// Si ((Ax < A’x < Bx o Ax < B’x < Bx) y ( Ay < A’y < Cy o Ay < C’y < Cy))
-		//  hay colisión, en cualquier otro caso no hay colisión.
-		
 		return posiciones.some(function(posicion){
 			
 			return ball[1].x > posicion[0].x && ball[0].x < posicion[1].x && ball[0].y < posicion[2].y && ball[2].y > posicion[0].y;
 		});
-
-
 	}
 
 	function ballAction() 
@@ -261,9 +278,14 @@ var game = (function ()
 
 	function showGoal() 
 	{
-        bufferctx.fillStyle="rgb(255,0,0)";
-        bufferctx.font="bold 35px Arial";
-        bufferctx.fillText("Goool", canvas.width / 2 - 100, canvas.height / 2);
+        document.getElementById('gol').style.color = "rgb(255, 5, 5)";
+	}
+
+	function hideGoal()
+	{
+		setTimeout(function(){
+			document.getElementById('gol').style.color = "transparent";
+		}, 1500);
 	}
 	
 	function update() 
@@ -281,7 +303,17 @@ var game = (function ()
 		{
 			bufferctx.drawImage(player, player.posX, player.posY);
 		});
-       
+	   
+		showScore();
+
+		if(gol)
+		{
+			showGoal();
+			hideGoal();
+
+			gol = false;
+		}
+
         ballAction();
     }
 
