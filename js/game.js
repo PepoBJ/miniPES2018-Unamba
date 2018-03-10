@@ -20,17 +20,26 @@ var game = (function ()
         buffer,
         bufferctx,
         ball,
-        bgCampo,
+		bgCampo,
+		numPlayer = 5,
         minHorizontalOffset = 100,
-        maxHorizontalOffset = 400,        
+		maxHorizontalOffset = 400,    
+		gol = false,    
         keyPressed = {},
         keyMap = {
 			left: 37,
 			up: 38,
 			right: 39,
 			down: 40
-        },
+		},
+		playersA = [],
+        playersB = [],
+		playerSrc = [
+			'img/jugador1.png',
+			'img/jugador2.png'
+		],
 		now = 0,
+		posiciones = [],
 		equipoA = 0,
 		equipoB = 0;
 
@@ -40,14 +49,13 @@ var game = (function ()
     }
 
 	function preloadImages () 
-	{
+	{		
         bgCampo = new Image();
         bgCampo.src = 'img/campo.png';
     }
 
 	function init() 
 	{
-
         preloadImages();
 
         canvas = document.getElementById('canvas');
@@ -60,6 +68,26 @@ var game = (function ()
 
 		ball = new Ball();
 		
+		for(var i = 0 ; i < numPlayer; i++)
+		{
+			playerA = new Player(0);
+			playersA.push(playerA);
+
+			playerB = new Player(1);
+			playersB.push(playerB);
+
+			posiciones.push([
+				new Point(playerA.posX, playerA.posY),
+				new Point(playerA.posX + 66, playerA.posY),
+				new Point(playerA.posX, playerA.posY + 66)
+			]);
+
+			posiciones.push([
+				new Point(playerB.posX, playerB.posY),
+				new Point(playerB.posX + 66, playerB.posY),
+				new Point(playerB.posX, playerB.posY + 66)
+			]);
+		}
 
         showLifeAndScore();
 
@@ -71,8 +99,8 @@ var game = (function ()
             requestAnimFrame(anim);
         }
         anim();
-    }
-
+	}
+	
 	function showLifeAndScore () 
 	{
         bufferctx.fillStyle="rgb(59,59,59)";
@@ -90,18 +118,46 @@ var game = (function ()
 	{
 		var settings = 
 		{
-            defaultHeight : 32
+			defaultHeight : 32,
+			defaultWidth : 32
 		};
 		
         ball = new Image();
         ball.src = 'img/ball.png';
-        ball.posX = (canvas.width / 2) - (ball.width / 2);
-        ball.posY = (canvas.height / 2) - (ball.height == 0 ? settings.defaultHeight : ball.height);
+        ball.posX = (canvas.width / 2) - (settings.defaultWidth / 2);
+        ball.posY = (canvas.height / 2) - (settings.defaultHeight / 2);
         ball.idGoal = false;
         ball.speed = 5;
 
 		ball.doAnything = function() 
 		{
+			if ((keyPressed.left && checkCollision(
+				[
+					new Point(ball.posX - ball.speed, ball.posY),
+					new Point(ball.posX  - ball.speed + settings.defaultWidth, ball.posY),
+					new Point(ball.posX  - ball.speed, ball.posY + settings.defaultHeight)
+				]
+			)) || (keyPressed.right && checkCollision(
+				[
+					new Point(ball.posX + ball.speed, ball.posY),
+					new Point(ball.posX  + ball.speed + settings.defaultWidth, ball.posY),
+					new Point(ball.posX  + ball.speed, ball.posY + settings.defaultHeight)
+				]
+			)) || (keyPressed.up && checkCollision(
+				[
+					new Point(ball.posX, ball.posY - ball.speed),
+					new Point(ball.posX + settings.defaultWidth, ball.posY - ball.speed),
+					new Point(ball.posX, ball.posY + settings.defaultHeight - ball.speed)
+				]
+			)) || (keyPressed.down && checkCollision(
+				[
+					new Point(ball.posX, ball.posY + ball.speed),
+					new Point(ball.posX + settings.defaultWidth, ball.posY + ball.speed),
+					new Point(ball.posX, ball.posY + settings.defaultHeight + ball.speed)
+				]
+			)))
+				return;
+
             if (keyPressed.left && ball.posX > 5)
                 ball.posX -= ball.speed;
             if (keyPressed.right && ball.posX < (canvas.width - ball.width - 5))
@@ -122,7 +178,21 @@ var game = (function ()
         };
 
         return ball;
-    }       
+	}
+
+	console.dir(posiciones);
+	function checkCollision(ball)
+	{
+		// Si ((Ax < A’x < Bx o Ax < B’x < Bx) y ( Ay < A’y < Cy o Ay < C’y < Cy))
+		//  hay colisión, en cualquier otro caso no hay colisión.
+		
+		return posiciones.some(function(posicion){
+			
+			return ball[1].x > posicion[0].x && ball[0].x < posicion[1].x && ball[0].y < posicion[2].y && ball[2].y > posicion[0].y;
+		});
+
+
+	}
 
 	function ballAction() 
 	{
@@ -168,6 +238,22 @@ var game = (function ()
         }
     }
 
+	function Player(typePlayer) 
+	{
+		var settings = 
+		{
+			defaultHeight : 66,
+			defaultWidth : 66
+		};
+
+		player = new Image();
+        player.src = playerSrc[typePlayer];
+		player.posX = getRandomNumber(canvas.width - (settings.defaultWidth));		
+		player.posY = getRandomNumber(canvas.height - (settings.defaultHeight));
+		
+		return player;
+    }
+
 	function draw() 
 	{
         ctx.drawImage(buffer, 0, 0);
@@ -178,13 +264,23 @@ var game = (function ()
         bufferctx.fillStyle="rgb(255,0,0)";
         bufferctx.font="bold 35px Arial";
         bufferctx.fillText("Goool", canvas.width / 2 - 100, canvas.height / 2);
-    }
-
+	}
+	
 	function update() 
 	{
         drawBackground();
 
-        bufferctx.drawImage(ball, ball.posX, ball.posY);
+		bufferctx.drawImage(ball, ball.posX, ball.posY);
+		
+		playersA.forEach(function(player)
+		{
+			bufferctx.drawImage(player, player.posX, player.posY);
+		});
+
+		playersB.forEach(function(player)
+		{
+			bufferctx.drawImage(player, player.posX, player.posY);
+		});
        
         ballAction();
     }
@@ -198,3 +294,9 @@ var game = (function ()
         init: init
     }
 })();
+
+function Point (x, y) 
+{
+	this.x = x;
+	this.y = y;
+}
